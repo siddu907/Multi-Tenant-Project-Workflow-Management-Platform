@@ -1,0 +1,200 @@
+{
+  "info": {
+    "name": "Multi-Tenant Project & Workflow Management Platform",
+    "description": "REST API collection for the FastAPI project. Set baseUrl and credentials before use. Authenticate with a Super Admin account for full access. Login saves accessToken and refreshToken. Create an organization, project, project member, then tasks in that order; create requests save IDs into collection variables. For uploads, select a local file in the form-data field. WebSocket notifications connect separately at {{baseUrl}}/ws/notifications?token={{accessToken}}.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{accessToken}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000", "type": "string" },
+    { "key": "email", "value": "", "type": "string" },
+    { "key": "password", "value": "", "type": "string" },
+    { "key": "newUserEmail", "value": "member@example.com", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "memberId", "value": "", "type": "string" },
+    { "key": "organizationId", "value": "", "type": "string" },
+    { "key": "projectId", "value": "", "type": "string" },
+    { "key": "projectId2", "value": "", "type": "string" },
+    { "key": "taskId", "value": "", "type": "string" },
+    { "key": "taskId2", "value": "", "type": "string" },
+    { "key": "dependencyId", "value": "", "type": "string" },
+    { "key": "commentId", "value": "", "type": "string" },
+    { "key": "attachmentId", "value": "", "type": "string" },
+    { "key": "notificationId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) {", "  const data = pm.response.json();", "  pm.collectionVariables.set('accessToken', data.access_token);", "  pm.collectionVariables.set('refreshToken', data.refresh_token);", "  if (data.user && data.user.id) pm.collectionVariables.set('userId', String(data.user.id));", "}"] } }]
+        },
+        { "name": "Current User", "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" } },
+        {
+          "name": "Refresh Tokens",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": "{{baseUrl}}/auth/refresh"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) {", "  const data = pm.response.json();", "  pm.collectionVariables.set('accessToken', data.access_token);", "  pm.collectionVariables.set('refreshToken', data.refresh_token);", "}"] } }]
+        },
+        { "name": "Change Password", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"new_password\": \"Newpass123!\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/auth/change-password" } },
+        { "name": "Logout", "request": { "method": "POST", "url": "{{baseUrl}}/auth/logout" } }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Project Member\",\n  \"email\": \"{{newUserEmail}}\",\n  \"password\": \"Memberpass123!\",\n  \"role\": \"team_member\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/users" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 201) {", "  const data = pm.response.json();", "  pm.collectionVariables.set('userId', String(data.id));", "  pm.collectionVariables.set('memberId', String(data.id));", "}"] } }]
+        },
+        { "name": "List Users", "request": { "method": "GET", "url": "{{baseUrl}}/users" } },
+        { "name": "Get User", "request": { "method": "GET", "url": "{{baseUrl}}/users/{{userId}}" } },
+        { "name": "Update User", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated User Name\",\n  \"email\": \"updated@example.com\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/users/{{userId}}" } },
+        { "name": "Activate User", "request": { "method": "PUT", "url": "{{baseUrl}}/users/{{userId}}/activate" } },
+        { "name": "Deactivate User", "request": { "method": "PUT", "url": "{{baseUrl}}/users/{{userId}}/deactivate" } }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Create Organization",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Example Organization\",\n  \"description\": \"Created from Postman\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/organizations" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) pm.collectionVariables.set('organizationId', String(pm.response.json().id));"] } }]
+        },
+        { "name": "List Organizations", "request": { "method": "GET", "url": "{{baseUrl}}/organizations" } },
+        { "name": "Get Organization", "request": { "method": "GET", "url": "{{baseUrl}}/organizations/{{organizationId}}" } },
+        { "name": "Update Organization", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Organization\",\n  \"description\": \"Updated description\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/organizations/{{organizationId}}" } },
+        { "name": "Delete Organization", "request": { "method": "DELETE", "url": "{{baseUrl}}/organizations/{{organizationId}}" } },
+        { "name": "List Organization Members", "request": { "method": "GET", "url": "{{baseUrl}}/organizations/{{organizationId}}/members" } },
+        { "name": "Add Organization Member", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"user_id\": {{memberId}}\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/organizations/{{organizationId}}/members" } },
+        { "name": "Change Organization Member Role", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"role\": \"project_manager\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/organizations/{{organizationId}}/members/{{memberId}}/role" } },
+        { "name": "Activate Organization Member", "request": { "method": "PUT", "url": "{{baseUrl}}/organizations/{{organizationId}}/members/{{memberId}}/activate" } },
+        { "name": "Deactivate Organization Member", "request": { "method": "PUT", "url": "{{baseUrl}}/organizations/{{organizationId}}/members/{{memberId}}/deactivate" } },
+        { "name": "Remove Organization Member", "request": { "method": "DELETE", "url": "{{baseUrl}}/organizations/{{organizationId}}/members/{{memberId}}" } }
+      ]
+    },
+    {
+      "name": "Projects",
+      "item": [
+        {
+          "name": "Create Project ",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"organization_id\": {{organizationId}},\n  \"name\": \"Example Project\",\n  \"description\": \"Created from Postman\",\n  \"status\": \"planning\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/projects" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) {", "  const id = String(pm.response.json().id);", "  if (!pm.collectionVariables.get('projectId')) pm.collectionVariables.set('projectId', id);", "  else pm.collectionVariables.set('projectId2', id);", "}"] } }]
+        },
+        { "name": "List Projects", "request": { "method": "GET", "url": "{{baseUrl}}/projects" } },
+        { "name": "Get Project", "request": { "method": "GET", "url": "{{baseUrl}}/projects/{{projectId}}" } },
+        { "name": "Update Project", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Project Name\",\n  \"description\": \"Updated details\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/projects/{{projectId}}" } },
+        { "name": "Archive Project", "request": { "method": "PUT", "url": "{{baseUrl}}/projects/{{projectId}}/archive" } },
+        { "name": "Delete Project", "request": { "method": "DELETE", "url": "{{baseUrl}}/projects/{{projectId}}" } },
+        { "name": "List Project Members", "request": { "method": "GET", "url": "{{baseUrl}}/projects/{{projectId}}/members" } },
+        { "name": "Add Project Member", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"user_id\": {{memberId}}\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/projects/{{projectId}}/members" } },
+        { "name": "Remove Project Member", "request": { "method": "DELETE", "url": "{{baseUrl}}/projects/{{projectId}}/members/{{memberId}}" } }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create Task ",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"project_id\": {{projectId}},\n  \"title\": \"Example Task\",\n  \"description\": \"Created from Postman\",\n  \"assignee_id\": {{memberId}},\n  \"priority\": \"medium\",\n  \"status\": \"backlog\",\n  \"estimated_hours\": 4\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/tasks" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) {", "  const id = String(pm.response.json().id);", "  if (!pm.collectionVariables.get('taskId')) pm.collectionVariables.set('taskId', id);", "  else pm.collectionVariables.set('taskId2', id);", "}"] } }]
+        },
+        { "name": "List Tasks ", "request": { "method": "GET", "url": "{{baseUrl}}/tasks?page=1&page_size=20&status=todo&priority=high&project={{projectId}}&search=Example&sort_by=created_at&sort_order=desc" } },
+        { "name": "Get Task", "request": { "method": "GET", "url": "{{baseUrl}}/tasks/{{taskId}}" } },
+        { "name": "Update Task ", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated Task\",\n  \"priority\": \"high\",\n  \"actual_hours\": 3.5\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/tasks/{{taskId}}" } },
+        { "name": "Reassign Task", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"assignee_id\": {{memberId}}\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/tasks/{{taskId}}/reassign" } },
+        { "name": "Change Task Status", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"todo\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/tasks/{{taskId}}/status" } },
+        { "name": "Move Task", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"project_id\": {{projectId2}}\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/tasks/{{taskId}}/move" } },
+        { "name": "Delete Task", "request": { "method": "DELETE", "url": "{{baseUrl}}/tasks/{{taskId}}" } }
+      ]
+    },
+    {
+      "name": "Task Dependencies",
+      "item": [
+        { "name": "Add Task Dependency", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"depends_on_task_id\": {{taskId2}}\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/api/tasks/{{taskId}}/dependencies" } },
+        { "name": "List Task Dependencies ", "request": { "method": "GET", "url": "{{baseUrl}}/api/tasks/{{taskId}}/dependencies" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) {", "  const data = pm.response.json();", "  if (data.length) pm.collectionVariables.set('dependencyId', String(data[0].id));", "}"] } }] },
+        { "name": "Remove Task Dependency", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/tasks/{{taskId}}/dependencies/{{dependencyId}}" } }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Add Task Comment ",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"content\": \"Please review this task, @member@example.com\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/tasks/{{taskId}}/comments" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) pm.collectionVariables.set('commentId', String(pm.response.json().id));"] } }]
+        },
+        { "name": "List Task Comments", "request": { "method": "GET", "url": "{{baseUrl}}/tasks/{{taskId}}/comments" } },
+        { "name": "Add Project Comment", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"content\": \"Project update\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/projects/{{projectId}}/comments" } },
+        { "name": "List Project Comments", "request": { "method": "GET", "url": "{{baseUrl}}/projects/{{projectId}}/comments" } },
+        { "name": "Update Comment ", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"content\": \"Updated comment content\"\n}", "options": { "raw": { "language": "json" } } }, "url": "{{baseUrl}}/comments/{{commentId}}" } },
+        { "name": "Delete Comment ", "request": { "method": "DELETE", "url": "{{baseUrl}}/comments/{{commentId}}" } }
+      ]
+    },
+    {
+      "name": "Attachments",
+      "item": [
+        { "name": "Upload Project Attachment ", "request": { "method": "POST", "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": "" }] }, "url": "{{baseUrl}}/projects/{{projectId}}/attachments" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) pm.collectionVariables.set('attachmentId', String(pm.response.json().id));"] } }] },
+        { "name": "Upload Task Attachment ", "request": { "method": "POST", "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": "" }] }, "url": "{{baseUrl}}/tasks/{{taskId}}/attachments" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) pm.collectionVariables.set('attachmentId', String(pm.response.json().id));"] } }] },
+        { "name": "List Project Attachments", "request": { "method": "GET", "url": "{{baseUrl}}/projects/{{projectId}}/attachments" } },
+        { "name": "List Task Attachments", "request": { "method": "GET", "url": "{{baseUrl}}/tasks/{{taskId}}/attachments" } },
+        { "name": "Get Attachment", "request": { "method": "GET", "url": "{{baseUrl}}/attachments/{{attachmentId}}" } },
+        { "name": "Delete Attachment", "request": { "method": "DELETE", "url": "{{baseUrl}}/attachments/{{attachmentId}}" } }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        { "name": "List Notifications ", "request": { "method": "GET", "url": "{{baseUrl}}/notifications" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["if (pm.response.code === 200) {", "  const data = pm.response.json();", "  if (data.length) pm.collectionVariables.set('notificationId', String(data[0].id));", "}"] } }] },
+        { "name": "Mark Notification Read", "request": { "method": "PUT", "url": "{{baseUrl}}/notifications/{{notificationId}}/read" } },
+        { "name": "Mark All Notifications Read", "request": { "method": "PUT", "url": "{{baseUrl}}/notifications/read-all" } }
+      ]
+    },
+    {
+      "name": "Dashboards",
+      "item": [
+        { "name": "Organization Dashboard", "request": { "method": "GET", "url": "{{baseUrl}}/dashboard/organization" } },
+        { "name": "Project Manager Dashboard", "request": { "method": "GET", "url": "{{baseUrl}}/dashboard/project-manager" } },
+        { "name": "My Tasks Dashboard", "request": { "method": "GET", "url": "{{baseUrl}}/dashboard/my-tasks" } }
+      ]
+    },
+    {
+      "name": "Audit Logs",
+      "item": [
+        { "name": "List Audit Logs", "request": { "method": "GET", "url": "{{baseUrl}}/audit-logs?page=1&page_size=50&organization_id={{organizationId}}" } }
+      ]
+    }
+  ]
+}
